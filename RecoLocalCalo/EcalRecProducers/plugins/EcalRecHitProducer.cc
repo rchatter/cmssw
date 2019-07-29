@@ -313,12 +313,19 @@ void EcalRecHitProducer::fillDescriptions(edm::ConfigurationDescriptions& descri
     psd0.add<double>("cThreshold_double",10);
     desc.add<edm::ParameterSetDescription>("cleaningConfig",psd0);
   }
-  desc.add<double>("logWarningEtThreshold_EE_FE",50);
-  desc.add<edm::InputTag>("eeDetIdToBeRecovered",edm::InputTag("ecalDetIdToBeRecovered","eeDetId"));
-  desc.add<bool>("recoverEBFE",true);
-  desc.add<edm::InputTag>("eeFEToBeRecovered",edm::InputTag("ecalDetIdToBeRecovered","eeFE"));
-  desc.add<edm::InputTag>("ebDetIdToBeRecovered",edm::InputTag("ecalDetIdToBeRecovered","ebDetId"));
-  desc.add<double>("singleChannelRecoveryThreshold",8);
+  desc.add<double>("logWarningEtThreshold_EE_FE", 50);
+  desc.add<edm::InputTag>("eeDetIdToBeRecovered", edm::InputTag("ecalDetIdToBeRecovered", "eeDetId"));
+  desc.add<bool>("recoverEBFE", true);
+  desc.add<edm::InputTag>("eeFEToBeRecovered", edm::InputTag("ecalDetIdToBeRecovered", "eeFE"));
+  desc.add<edm::InputTag>("ebDetIdToBeRecovered", edm::InputTag("ecalDetIdToBeRecovered", "ebDetId"));
+  desc.add<double>("singleChannelRecoveryThreshold", 8);
+  desc.add<double>("sum8ChannelRecoveryThreshold", 0.);
+  desc.add<edm::FileInPath>("bdtWeightFileNoCracks",
+                            edm::FileInPath("RecoLocalCalo/EcalDeadChannelRecoveryAlgos/data/BDTWeights/"
+                                            "bdtgAllRH_8GT700MeV_noCracks_ZskimData2017_v1.xml"));
+  desc.add<edm::FileInPath>("bdtWeightFileCracks",
+                            edm::FileInPath("RecoLocalCalo/EcalDeadChannelRecoveryAlgos/data/BDTWeights/"
+                                            "bdtgAllRH_8GT700MeV_onlyCracks_ZskimData2017_v1.xml"));
   {
     std::vector<std::string> temp1;
     temp1.reserve(9);

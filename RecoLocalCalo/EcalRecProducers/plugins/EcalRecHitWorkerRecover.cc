@@ -18,30 +18,32 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Framework/interface/EDProducer.h"
 
+EcalRecHitWorkerRecover::EcalRecHitWorkerRecover(const edm::ParameterSet& ps, edm::ConsumesCollector& c)
+    : EcalRecHitWorkerBaseClass(ps, c) {
+  rechitMaker_ = std::make_unique<EcalRecHitSimpleAlgo>();
+  // isolated channel recovery
+  singleRecoveryMethod_ = ps.getParameter<std::string>("singleChannelRecoveryMethod");
+  singleRecoveryThreshold_ = ps.getParameter<double>("singleChannelRecoveryThreshold");
+  sum8RecoveryThreshold_ = ps.getParameter<double>("sum8ChannelRecoveryThreshold");
+  killDeadChannels_ = ps.getParameter<bool>("killDeadChannels");
+  recoverEBIsolatedChannels_ = ps.getParameter<bool>("recoverEBIsolatedChannels");
+  recoverEEIsolatedChannels_ = ps.getParameter<bool>("recoverEEIsolatedChannels");
+  recoverEBVFE_ = ps.getParameter<bool>("recoverEBVFE");
+  recoverEEVFE_ = ps.getParameter<bool>("recoverEEVFE");
+  recoverEBFE_ = ps.getParameter<bool>("recoverEBFE");
+  recoverEEFE_ = ps.getParameter<bool>("recoverEEFE");
 
-EcalRecHitWorkerRecover::EcalRecHitWorkerRecover(const edm::ParameterSet&ps, edm::ConsumesCollector&  c) :
-  EcalRecHitWorkerBaseClass(ps,c)
-{
-        rechitMaker_ = std::make_unique<EcalRecHitSimpleAlgo>();
-        // isolated channel recovery
-        singleRecoveryMethod_    = ps.getParameter<std::string>("singleChannelRecoveryMethod");
-        singleRecoveryThreshold_ = ps.getParameter<double>("singleChannelRecoveryThreshold");
-        killDeadChannels_        = ps.getParameter<bool>("killDeadChannels");
-        recoverEBIsolatedChannels_ = ps.getParameter<bool>("recoverEBIsolatedChannels");
-        recoverEEIsolatedChannels_ = ps.getParameter<bool>("recoverEEIsolatedChannels");
-        recoverEBVFE_ = ps.getParameter<bool>("recoverEBVFE");
-        recoverEEVFE_ = ps.getParameter<bool>("recoverEEVFE");
-        recoverEBFE_ = ps.getParameter<bool>("recoverEBFE");
-        recoverEEFE_ = ps.getParameter<bool>("recoverEEFE");
+  dbStatusToBeExcludedEE_ = ps.getParameter<std::vector<int> >("dbStatusToBeExcludedEE");
+  dbStatusToBeExcludedEB_ = ps.getParameter<std::vector<int> >("dbStatusToBeExcludedEB");
 
-	dbStatusToBeExcludedEE_ = ps.getParameter<std::vector<int> >("dbStatusToBeExcludedEE");
-	dbStatusToBeExcludedEB_ = ps.getParameter<std::vector<int> >("dbStatusToBeExcludedEB");
+  logWarningEtThreshold_EB_FE_ = ps.getParameter<double>("logWarningEtThreshold_EB_FE");
+  logWarningEtThreshold_EE_FE_ = ps.getParameter<double>("logWarningEtThreshold_EE_FE");
 
-        logWarningEtThreshold_EB_FE_ = ps.getParameter<double>("logWarningEtThreshold_EB_FE");
-        logWarningEtThreshold_EE_FE_ = ps.getParameter<double>("logWarningEtThreshold_EE_FE");
+  tpDigiToken_ =
+      c.consumes<EcalTrigPrimDigiCollection>(ps.getParameter<edm::InputTag>("triggerPrimitiveDigiCollection"));
 
-        tpDigiToken_ = 
-          c.consumes<EcalTrigPrimDigiCollection>(ps.getParameter<edm::InputTag>("triggerPrimitiveDigiCollection"));
+  if (recoverEBIsolatedChannels_ && singleRecoveryMethod_ == "BDTG")
+    ebDeadChannelCorrector.setParameters(ps);
 }
 
 
@@ -66,6 +68,7 @@ void EcalRecHitWorkerRecover::set(const edm::EventSetup& es)
 }
 
 
+<<<<<<< HEAD
 bool
 EcalRecHitWorkerRecover::run( const edm::Event & evt, 
                 const EcalUncalibratedRecHit& uncalibRH,
@@ -123,6 +126,95 @@ EcalRecHitWorkerRecover::run( const edm::Event & evt,
                         }
 		   	if(logWarningEtThreshold_EE_FE_<0)   return true; // if you don't want log warning just return true
                 }
+=======
+  if (flags == EcalRecHitWorkerRecover::EB_single) {
+    // recover as single dead channel
+    ebDeadChannelCorrector.setCaloTopology(singleRecoveryMethod_, caloTopology_.product());
+
+    // channel recovery. Accepted new RecHit has the flag AcceptRecHit=TRUE
+    bool AcceptRecHit = true;
+    float ebEn = ebDeadChannelCorrector.correct(
+        detId, result, singleRecoveryMethod_, singleRecoveryThreshold_, sum8RecoveryThreshold_, &AcceptRecHit);
+    EcalRecHit hit(detId, ebEn, 0., EcalRecHit::kDead);
+
+    if (hit.energy() != 0 and AcceptRecHit == true) {
+      hit.setFlag(EcalRecHit::kNeighboursRecovered);
+    } else {
+      // recovery failed
+      hit.setFlag(EcalRecHit::kDead);
+    }
+    insertRecHit(hit, result);
+
+  } else if (flags == EcalRecHitWorkerRecover::EE_single) {
+    // recover as single dead channel
+    eeDeadChannelCorrector.setCaloTopology(singleRecoveryMethod_, caloTopology_.product());
+
+    // channel recovery. Accepted new RecHit has the flag AcceptRecHit=TRUE
+    bool AcceptRecHit = true;
+    float eeEn = eeDeadChannelCorrector.correct(
+        detId, result, singleRecoveryMethod_, singleRecoveryThreshold_, sum8RecoveryThreshold_, &AcceptRecHit);
+    EcalRecHit hit(detId, eeEn, 0., EcalRecHit::kDead);
+    if (hit.energy() != 0 and AcceptRecHit == true) {
+      hit.setFlag(EcalRecHit::kNeighboursRecovered);
+    } else {
+      // recovery failed
+      hit.setFlag(EcalRecHit::kDead);
+    }
+    insertRecHit(hit, result);
+
+  } else if (flags == EcalRecHitWorkerRecover::EB_VFE) {
+    // recover as dead VFE
+    EcalRecHit hit(detId, 0., 0.);
+    hit.setFlag(EcalRecHit::kDead);
+    // recovery not implemented
+    insertRecHit(hit, result);
+  } else if (flags == EcalRecHitWorkerRecover::EB_FE) {
+    // recover as dead TT
+
+    EcalTrigTowerDetId ttDetId(((EBDetId)detId).tower());
+    edm::Handle<EcalTrigPrimDigiCollection> pTPDigis;
+    evt.getByToken(tpDigiToken_, pTPDigis);
+    const EcalTrigPrimDigiCollection* tpDigis = nullptr;
+    tpDigis = pTPDigis.product();
+
+    EcalTrigPrimDigiCollection::const_iterator tp = tpDigis->find(ttDetId);
+    // recover the whole trigger tower
+    if (tp != tpDigis->end()) {
+      //std::vector<DetId> vid = ecalMapping_->dccTowerConstituents( ecalMapping_->DCCid( ttDetId ), ecalMapping_->iTT( ttDetId ) );
+      std::vector<DetId> vid = ttMap_->constituentsOf(ttDetId);
+      float tpEt = ecalScale_.getTPGInGeV(tp->compressedEt(), tp->id());
+      float tpEtThreshEB = logWarningEtThreshold_EB_FE_;
+      if (tpEt > tpEtThreshEB) {
+        edm::LogWarning("EnergyInDeadEB_FE") << "TP energy in the dead TT = " << tpEt << " at " << ttDetId;
+      }
+      if (!killDeadChannels_ || recoverEBFE_) {
+        // democratic energy sharing
+
+        for (std::vector<DetId>::const_iterator dit = vid.begin(); dit != vid.end(); ++dit) {
+          if (alreadyInserted(*dit))
+            continue;
+          float theta = ebGeom_->getGeometry(*dit)->getPosition().theta();
+          float tpEt = ecalScale_.getTPGInGeV(tp->compressedEt(), tp->id());
+          if (checkChannelStatus(*dit, dbStatusToBeExcludedEB_)) {
+            EcalRecHit hit(*dit, tpEt / ((float)vid.size()) / sin(theta), 0.);
+            hit.setFlag(EcalRecHit::kTowerRecovered);
+            if (tp->compressedEt() == 0xFF)
+              hit.setFlag(EcalRecHit::kTPSaturated);
+            if (tp->sFGVB())
+              hit.setFlag(EcalRecHit::kL1SpikeFlag);
+            insertRecHit(hit, result);
+          }
+        }
+      } else {
+        // tp not found => recovery failed
+        std::vector<DetId> vid = ttMap_->constituentsOf(ttDetId);
+        for (std::vector<DetId>::const_iterator dit = vid.begin(); dit != vid.end(); ++dit) {
+          if (alreadyInserted(*dit))
+            continue;
+          EcalRecHit hit(*dit, 0., 0.);
+          hit.setFlag(EcalRecHit::kDead);
+          insertRecHit(hit, result);
+>>>>>>> b7d7959e7c6... Final (?) fix to the chi2 problem. In the end the 'source' of the different chi2 was residing in the old recovery code which has never been turned on hence the problem never spot. With this commit the recovery with the new BDT is still on. Will be switched off with the next one
         }
 
         if ( flags == EcalRecHitWorkerRecover::EB_single ) {
