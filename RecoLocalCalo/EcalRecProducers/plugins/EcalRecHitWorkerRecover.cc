@@ -129,7 +129,7 @@ EcalRecHitWorkerRecover::run( const edm::Event & evt,
 =======
   if (flags == EcalRecHitWorkerRecover::EB_single) {
     // recover as single dead channel
-    ebDeadChannelCorrector.setCaloTopology(singleRecoveryMethod_, caloTopology_.product());
+    ebDeadChannelCorrector.setCaloTopology(caloTopology_.product());
 
     // channel recovery. Accepted new RecHit has the flag AcceptRecHit=TRUE
     bool AcceptRecHit = true;
@@ -147,7 +147,7 @@ EcalRecHitWorkerRecover::run( const edm::Event & evt,
 
   } else if (flags == EcalRecHitWorkerRecover::EE_single) {
     // recover as single dead channel
-    eeDeadChannelCorrector.setCaloTopology(singleRecoveryMethod_, caloTopology_.product());
+    eeDeadChannelCorrector.setCaloTopology(caloTopology_.product());
 
     // channel recovery. Accepted new RecHit has the flag AcceptRecHit=TRUE
     bool AcceptRecHit = true;
