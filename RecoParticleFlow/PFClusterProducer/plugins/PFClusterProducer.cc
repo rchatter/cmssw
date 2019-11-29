@@ -72,9 +72,14 @@ PFClusterProducer::PFClusterProducer(const edm::ParameterSet& conf) :
 void PFClusterProducer::beginLuminosityBlock(const edm::LuminosityBlock& lumi, 
 					     const edm::EventSetup& es) {
   _initialClustering->update(es);
-  if( _pfClusterBuilder ) _pfClusterBuilder->update(es);
-  if( _positionReCalc ) _positionReCalc->update(es);
   
+  if (_pfClusterBuilder)
+    _pfClusterBuilder->update(es);
+  if (_positionReCalc)
+    _positionReCalc->update(es);
+  for( const auto& cleaner : _cleaners ) cleaner->update(es);
+  for( const auto& cleaner : _seedcleaners ) cleaner->update(es);
+
 }
 
 void PFClusterProducer::produce(edm::Event& e, const edm::EventSetup& es) {
