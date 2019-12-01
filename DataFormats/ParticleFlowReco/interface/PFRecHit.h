@@ -54,8 +54,12 @@ namespace reco {
     /// default constructor. Sets energy and position to zero
     PFRecHit(){}
 
-  PFRecHit(std::shared_ptr<const CaloCellGeometry> caloCell, unsigned int detId, PFLayer::Layer layer, float energy, uint32_t flags=0)
-      : caloCell_(std::move(caloCell)), detId_(detId), layer_(layer), energy_(energy),flags_(flags) {}
+    PFRecHit(std::shared_ptr<const CaloCellGeometry> caloCell,
+             unsigned int detId,
+             PFLayer::Layer layer,
+             float energy,
+             uint32_t flags = 0)
+        : caloCell_(std::move(caloCell)), detId_(detId), layer_(layer), energy_(energy), flags_(flags) {}
 
     
     /// copy
@@ -123,11 +127,11 @@ namespace reco {
 
 
     // Detector-dependent status flag
-    uint32_t getFlags() const {return flags_;}
+    uint32_t getFlags() const { return flags_; }
 
     //
-    void setFlags(uint32_t flags) {flags_ = flags;}
-    
+    void setFlags(uint32_t flags) { flags_ = flags; }
+
     /// rechit cell centre x, y, z
     PositionType const& position() const { return caloCell().getPosition().basicVector(); }
     

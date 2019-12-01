@@ -25,15 +25,15 @@ PFClusterProducer::PFClusterProducer(const edm::ParameterSet& conf) :
     _cleaners.emplace_back(RecHitTopologicalCleanerFactory::get()->create(cleanerName,conf));
   }
 
-  if (conf.exists("seedCleaners")){ 
-      const edm::VParameterSet& seedcleanerConfs = conf.getParameterSetVector("seedCleaners");
-  
-      for (const auto& conf : seedcleanerConfs) {
-          const std::string& seedcleanerName = conf.getParameter<std::string>("algoName");
-          _seedcleaners.emplace_back(RecHitTopologicalCleanerFactory::get()->create(seedcleanerName, conf));
+  if (conf.exists("seedCleaners")) {
+    const edm::VParameterSet& seedcleanerConfs = conf.getParameterSetVector("seedCleaners");
+
+    for (const auto& conf : seedcleanerConfs) {
+      const std::string& seedcleanerName = conf.getParameter<std::string>("algoName");
+      _seedcleaners.emplace_back(RecHitTopologicalCleanerFactory::get()->create(seedcleanerName, conf));
+    }
   }
-  }
-  
+
   edm::ConsumesCollector sumes = consumesCollector();
 
   // setup seed finding
@@ -80,9 +80,10 @@ void PFClusterProducer::beginLuminosityBlock(const edm::LuminosityBlock& lumi,
     _pfClusterBuilder->update(es);
   if (_positionReCalc)
     _positionReCalc->update(es);
-  for( const auto& cleaner : _cleaners ) cleaner->update(es);
-  for( const auto& cleaner : _seedcleaners ) cleaner->update(es);
-
+  for (const auto& cleaner : _cleaners)
+    cleaner->update(es);
+  for (const auto& cleaner : _seedcleaners)
+    cleaner->update(es);
 }
 
 void PFClusterProducer::produce(edm::Event& e, const edm::EventSetup& es) {
@@ -99,12 +100,12 @@ void PFClusterProducer::produce(edm::Event& e, const edm::EventSetup& es) {
     cleaner->clean(rechits, mask);
   }
 
-  // no seeding on these hits 
-  std::vector<bool> seedmask= mask;
+  // no seeding on these hits
+  std::vector<bool> seedmask = mask;
   for (const auto& cleaner : _seedcleaners) {
     cleaner->clean(rechits, seedmask);
   }
-  
+
   std::vector<bool> seedable(rechits->size(), false);
   _seedFinder->findSeeds(rechits, seedmask, seedable);
 

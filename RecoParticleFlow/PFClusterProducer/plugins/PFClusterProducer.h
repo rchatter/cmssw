@@ -30,8 +30,9 @@ class PFClusterProducer : public edm::stream::EDProducer<> {
   void beginLuminosityBlock(const edm::LuminosityBlock&, 
 				    const edm::EventSetup&) override;
   void produce(edm::Event&, const edm::EventSetup&) override;
+ 
   
- private:
+private:
   // inputs
   edm::EDGetTokenT<reco::PFRecHitCollection> _rechitsLabel;
   // options
