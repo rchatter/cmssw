@@ -64,7 +64,7 @@ class PFEcalBarrelRecHitCreator :  public  PFRecHitCreatorBase {
       const DetId& detid = erh.detid();
       auto energy = erh.energy();
       auto time = erh.time();
-      auto flags = erh.getFlagsBits();
+      auto flags = erh.flagsBits();
       bool hi = (useSrF ? isHighInterest(detid) : true);
 
       const auto thisCell= ecalGeo->getGeometry(detid);

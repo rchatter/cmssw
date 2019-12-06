@@ -127,7 +127,7 @@ namespace reco {
 
 
     // Detector-dependent status flag
-    uint32_t getFlags() const { return flags_; }
+    uint32_t flags() const { return flags_; }
 
     //
     void setFlags(uint32_t flags) { flags_ = flags; }
